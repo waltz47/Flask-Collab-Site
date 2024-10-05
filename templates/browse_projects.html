@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Projects</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2 class="mb-4">Browse Available Projects</h2>
+        
+        <div class="input-group mb-3">
+            <input type="text" id="search" class="form-control" placeholder="Search projects...">
+            <button class="btn btn-outline-secondary" type="button" id="search-button">Search</button>
+        </div>
+        <ul id="results" class="list-group mb-3">
+            <!-- Search results will be inserted here -->
+        </ul>
+
+        {% if projects %}
+        <div class="list-group">
+            {% for project in projects %}
+                <a href="#" class="list-group-item list-group-item-action mb-1">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">{{ project.title }}</h5>
+                        <small>Posted by: {{ project.owner }}</small>
+                    </div>
+                    <p class="mb-1">{{ project.description }}</p>
+                        <!-- Displaying Images -->
+                    <div class="image-carousel">
+                        {% if project.project_images %}
+                            <img src="{{ url_for('static', filename= 'uploads/'+project.project_images) }}" class="img-fluid img-thumbnail" alt="Project Image">
+                        {% else %}
+                            <p>No image for this project.</p>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+        {% else %}
+            <p class="alert alert-info">No projects available at the moment.</p>
+        {% endif %}
+        
+        <a href="/" class="btn btn-link">Back to homepage</a>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        $("#search").on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $.ajax({
+                url: "/search",
+                type: "GET",
+                data: {q: value},
+                success: function(data) {
+                    $("#results").empty();
+                    data.forEach(function(item) {
+                        $("#results").append('<a href="#" class="list-group-item list-group-item-action">' + item.title + '</a>');
+                    });
+                }
+            });
+        });
+
+        // Optional: Trigger search on button click
+        $("#search-button").on('click', function() {
+            $("#search").trigger('keyup');
+        });
+    });
+    </script>
+</body>
+</html>
