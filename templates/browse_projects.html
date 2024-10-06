@@ -29,7 +29,7 @@
                     <p class="mb-1">{{ project.description }}</p>
                         <!-- Displaying Images -->
                     <div class="image-carousel">
-                        {% if project.project_images %}
+                        {% if project.project_images|length > 0 %}
                             <img src="{{ url_for('static', filename= 'uploads/'+project.project_images) }}" class="img-fluid img-thumbnail" alt="Project Image">
                         {% else %}
                             <p>No image for this project.</p>

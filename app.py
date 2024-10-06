@@ -1,11 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from classes import *
 from werkzeug.utils import secure_filename
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import check_password_hash, generate_password_hash
 import os
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
 app.config['UPLOAD_DIR'] = 'static/uploads'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db.init_app(app)
+with app.app_context():
+    db.create_all()
 
 # Files for user and project data
 USER_FILE = 'login.txt'
@@ -66,10 +74,17 @@ def homepage():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        #register new user
-        save_user(request.form)
+        username = request.form['username']
+        password = request.form['password']
+        if User.query.filter_by(username=username).first():
+            print('Username already exists.', 'error')
+            return redirect(url_for('register'))
+        new_user = User(username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        print('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
-    
     return render_template('register.html')
 
 # Login route
@@ -78,15 +93,14 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        # Validate login
-        with open(USER_FILE, 'r') as f:
-            for line in f:
-                stored_username, stored_password, full_name, location = line.strip().split(',')
-                if stored_username == username and stored_password == password:
-                    session['username'] = username
-                    return redirect(url_for('homepage'))
-        return "Invalid username or password."
-    
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            # Here you might want to start a session for the user
+            flash('Logged in successfully.', 'success')
+            session['username'] = username
+            return redirect(url_for('homepage'))
+        else:
+            flash('Login failed. Check your username and password.', 'error')
     return render_template('login.html')
 
 # Post a project route
