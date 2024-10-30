@@ -45,9 +45,10 @@ def get_all_projects():
     try:
         with open(PROJECT_FILE, 'r') as f:
             for line in f:
-                p = project()
+                p = Project()
                 p.read_from_string(line)
-                projects.append(p)
+                if p.id:  # Ensure project has an ID
+                    projects.append(p)
     except FileNotFoundError:
         pass
     return projects
@@ -58,7 +59,7 @@ def get_search_results(q):
     projects = get_all_projects()
     matching = []
     for p in projects:
-        if q in p.title.lower():
+        if q in p.title.lower() or q in p.description.lower():
             matching.append(p.serialize())
 
     return matching
@@ -113,7 +114,7 @@ def post_project():
         title = request.form['title']
         description = request.form['description']
         owner = session['username']
-        p = project(title=title,description=description,owner=owner)
+        p = Project(title=title, description=description, owner=owner)
         if 'images' in request.files:
             for image in request.files.getlist('images'):
                 if image and allowed_file(image.filename):  # Ensure you have an allowed_file function
@@ -132,8 +133,28 @@ def post_project():
 # Browse projects route
 @app.route('/browse-projects')
 def browse_projects():
-    projects = get_all_projects()
-    return render_template('browse_projects.html', projects=projects)
+    return render_template('browse_projects.html')
+
+@app.route('/load-more-projects')
+def load_more_projects():
+    page = request.args.get('page', 1, type=int)
+    initial_load = request.args.get('initialLoad', 'false').lower() == 'true'
+    items_per_page = 10 if initial_load else 5  # Load more items initially
+    all_projects = get_all_projects()
+    
+    # Sort projects by title or another attribute to ensure consistent ordering
+    all_projects.sort(key=lambda x: x.title)
+    
+    # Calculate indices
+    start_idx = (page - 1) * items_per_page
+    end_idx = min(start_idx + items_per_page, len(all_projects))  # Prevent going beyond list bounds
+    
+    # Return empty list if start_idx is beyond available projects
+    if start_idx >= len(all_projects):
+        return jsonify([])
+    print(f"loading more project: {start_idx}:{end_idx}")
+    projects = all_projects[start_idx:end_idx]
+    return jsonify([p.serialize() for p in projects])
 
 # Logout route
 @app.route('/logout')
@@ -148,6 +169,5 @@ def search():
     # print(results)
     return jsonify(results)
 
-
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug=True)
