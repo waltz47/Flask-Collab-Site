@@ -37,7 +37,7 @@ class Project:
             self.title = data[1]
             self.description = data[2]
             self.owner = data[3]
-            self.project_images = data[4] if len(data) > 4 else ""
+            self.project_images = data[4] if (len(data) > 4) else ""
         except Exception as e:
             print(f"Unable to read project from string: {s}, Error: {e}")
     

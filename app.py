@@ -121,7 +121,7 @@ def post_project():
                     filename = secure_filename(image.filename)
                     image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
                     image.save(image_path)
-                    p.add_image(filename)  # Or full path if needed
+                    p.add_image(filename)  # Save only the filename
         else:
             print("No images attached")
 
@@ -155,6 +155,15 @@ def load_more_projects():
     print(f"loading more project: {start_idx}:{end_idx}")
     projects = all_projects[start_idx:end_idx]
     return jsonify([p.serialize() for p in projects])
+
+@app.route('/view-project/<project_id>')
+def view_project(project_id):
+    all_projects = get_all_projects()
+    project = next((p for p in all_projects if p.id == project_id), None)
+    if project:
+        return render_template('view_project.html', project=project)
+    else:
+        return "Project not found", 404
 
 # Logout route
 @app.route('/logout')
