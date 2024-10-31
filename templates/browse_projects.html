@@ -1,171 +1,150 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Browse Projects</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
-    <div class="container mt-4">
-        <h2 class="mb-4">Ongoing Projects</h2>
-        
-        <div class="input-group mb-3">
-            <input type="text" id="search" class="form-control" placeholder="Search...">
-            <button class="btn btn-outline-secondary" type="button" id="search-button">Search</button>
-        </div>
-        <div id="projects-container" class="list-group">
-            <!-- Projects will be loaded here -->
-        </div>
-        <div id="loading" class="text-center d-none">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-        <div id="sentinel" class="mt-4"></div>
-        <a href="/" class="btn btn-link">Back to homepage</a>
+{% extends "base.html" %}
+{% block title %}Browse Projects{% endblock %}
+{% block content %}
+<h2 class="mb-4">Browse</h2>
+<div class="input-group mb-3">
+    <input type="text" id="search" class="form-control" placeholder="Search...">
+    <button class="btn btn-outline-secondary" type="button" id="search-button">Search</button>
+</div>
+<div id="projects-container" class="list-group">
+    <!-- Projects will be loaded here -->
+</div>
+<div id="loading" class="text-center d-none">
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
     </div>
+</div>
+<div id="sentinel" class="mt-4"></div>
+<a href="/" class="btn btn-link">Back to homepage</a>
 
-    <script>
-        let currentPage = 1;
-        let loading = false;
-        let loadedProjects = new Set(); // Track loaded project IDs
-        let allProjectsLoaded = false;
+<script>
+    let currentPage = 1;
+    let loading = false;
+    let loadedProjects = new Set(); // Track loaded project IDs
+    let allProjectsLoaded = false;
 
-        function createProjectElement(project) {
-            return `
-                <a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-1" id="project-${project.id}">
-                    <div class="d-flex w-100 justify-content-between">
-                        <h5 class="mb-1">${project.title}</h5>
-                        <small>Posted by: ${project.owner}</small>
-                    </div>
-                    <p class="mb-1">${project.description}</p>
-                    <div class="image-carousel">
-                        ${project.images ? 
-                            project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail" alt="Project Image">`).join('') :
-                            '<p>No image for this project.</p>'}
-                    </div>
-                </a>
-            `;
-        }
+    function createProjectElement(project) {
+        return `<a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-1" id="project-${project.id}" style="display: block; text-decoration: none;">
+<div class="d-flex w-100 justify-content-between"><h5 class="mb-1">${project.title}</h5><small>Posted by: ${project.owner}</small></div><p class="mb-0">${project.description}</p>${project.images ? `<div class="image-grid mt-2">${project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail project-image" alt="Project Image" onclick="event.stopPropagation()">`).join('')}</div>` : ''}</a>`;
+    }
 
-        async function loadMoreProjects() {
-            if (loading || allProjectsLoaded) return;
+    async function loadMoreProjects() {
+        if (loading || allProjectsLoaded) return;
+        
+        loading = true;
+        document.getElementById('loading').classList.remove('d-none');
+        
+        try {
+            const response = await fetch(`/load-more-projects?page=${currentPage}`);
+            const projects = await response.json();
             
-            loading = true;
-            document.getElementById('loading').classList.remove('d-none');
-            
-            try {
-                const response = await fetch(`/load-more-projects?page=${currentPage}`);
-                const projects = await response.json();
-                
-                if (projects.length > 0) {
-                    const container = document.getElementById('projects-container');
-                    let newProjectsAdded = false;
-                    
-                    projects.forEach(project => {
-                        if (!loadedProjects.has(project.id)) {
-                            loadedProjects.add(project.id);
-                            container.insertAdjacentHTML('beforeend', createProjectElement(project));
-                            newProjectsAdded = true;
-                        }
-                    });
-                    
-                    if (newProjectsAdded) {
-                        currentPage++;
-                    }
-                    
-                    // If fewer projects are returned than items_per_page, all projects are loaded
-                    if (projects.length < 5) {  // items_per_page=5
-                        allProjectsLoaded = true;
-                        observer.unobserve(document.getElementById('sentinel'));
-                    }
-                } else {
-                    allProjectsLoaded = true;
-                    observer.unobserve(document.getElementById('sentinel'));
-                }
-            } catch (error) {
-                console.error('Error loading projects:', error);
-            } finally {
-                loading = false;
-                document.getElementById('loading').classList.add('d-none');
-                
-                // Check if sentinel is visible after loading
-                if (!allProjectsLoaded && isElementInViewport(document.getElementById('sentinel'))) {
-                    loadMoreProjects();
-                }
-            }
-        }
-
-        function isElementInViewport(el) {
-            const rect = el.getBoundingClientRect();
-            return (
-                rect.top >= 0 &&
-                rect.left >= 0 &&
-                rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-                rect.right <= (window.innerWidth || document.documentElement.clientWidth)
-            );
-        }
-
-        async function searchProjects(query) {
-            try {
-                // Reset all tracking variables
-                currentPage = 1;
-                loadedProjects.clear();
-                allProjectsLoaded = false;
-                loading = false;
-                
-                const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-                const projects = await response.json();
+            if (projects.length > 0) {
                 const container = document.getElementById('projects-container');
-                container.innerHTML = '';
+                let newProjectsAdded = false;
                 
                 projects.forEach(project => {
-                    loadedProjects.add(project.id);
-                    container.insertAdjacentHTML('beforeend', createProjectElement(project));
+                    if (!loadedProjects.has(project.id)) {
+                        loadedProjects.add(project.id);
+                        container.insertAdjacentHTML('beforeend', createProjectElement(project));
+                        newProjectsAdded = true;
+                    }
                 });
-
-                // Reset the sentinel observation if there are more projects to load
-                if (projects.length >= 5) {  // items_per_page=5
-                    allProjectsLoaded = false;
-                    observer.observe(document.getElementById('sentinel'));
-                } else {
+                
+                if (newProjectsAdded) {
+                    currentPage++;
+                }
+                
+                // If fewer projects are returned than items_per_page, all projects are loaded
+                if (projects.length < 5) {  // items_per_page=5
                     allProjectsLoaded = true;
                     observer.unobserve(document.getElementById('sentinel'));
                 }
-            } catch (error) {
-                console.error('Error searching projects:', error);
+            } else {
+                allProjectsLoaded = true;
+                observer.unobserve(document.getElementById('sentinel'));
+            }
+        } catch (error) {
+            console.error('Error loading projects:', error);
+        } finally {
+            loading = false;
+            document.getElementById('loading').classList.add('d-none');
+            
+            // Check if sentinel is visible after loading
+            if (!allProjectsLoaded && isElementInViewport(document.getElementById('sentinel'))) {
+                loadMoreProjects();
             }
         }
+    }
 
-        document.getElementById('search-button').addEventListener('click', () => {
-            const query = document.getElementById('search').value.trim();
+    function isElementInViewport(el) {
+        const rect = el.getBoundingClientRect();
+        return (
+            rect.top >= 0 &&
+            rect.left >= 0 &&
+            rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+            rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+        );
+    }
+
+    async function searchProjects(query) {
+        try {
+            // Reset all tracking variables
+            currentPage = 1;
+            loadedProjects.clear();
+            allProjectsLoaded = false;
+            loading = false;
+            
+            const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const projects = await response.json();
+            const container = document.getElementById('projects-container');
+            container.innerHTML = '';
+            
+            projects.forEach(project => {
+                loadedProjects.add(project.id);
+                container.insertAdjacentHTML('beforeend', createProjectElement(project));
+            });
+
+            // Reset the sentinel observation if there are more projects to load
+            if (projects.length >= 5) {  // items_per_page=5
+                allProjectsLoaded = false;
+                observer.observe(document.getElementById('sentinel'));
+            } else {
+                allProjectsLoaded = true;
+                observer.unobserve(document.getElementById('sentinel'));
+            }
+        } catch (error) {
+            console.error('Error searching projects:', error);
+        }
+    }
+
+    document.getElementById('search-button').addEventListener('click', () => {
+        const query = document.getElementById('search').value.trim();
+        searchProjects(query);
+    });
+
+    document.getElementById('search').addEventListener('keyup', (event) => {
+        if (event.key === 'Enter') {
+            const query = event.target.value.trim();
             searchProjects(query);
-        });
+        }
+    });
 
-        document.getElementById('search').addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                const query = event.target.value.trim();
-                searchProjects(query);
+    // Create an intersection observer
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                loadMoreProjects();
             }
         });
+    }, {
+        rootMargin: '100px'
+    });
 
-        // Create an intersection observer
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    loadMoreProjects();
-                }
-            });
-        }, {
-            rootMargin: '100px'
-        });
+    // Observe the sentinel element
+    observer.observe(document.getElementById('sentinel'));
 
-        // Observe the sentinel element
-        observer.observe(document.getElementById('sentinel'));
+    // Initial load
+    loadMoreProjects();
 
-        // Initial load
-        loadMoreProjects();
-    </script>
-</body>
-</html>
+</script>
+{% endblock %}

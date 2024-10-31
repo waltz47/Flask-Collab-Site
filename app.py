@@ -25,7 +25,19 @@ def allowed_file(filename):
 @app.route('/')
 @app.route('/home')
 def homepage():
-    return render_template('homepage.html')
+    # Read 'about.txt' content
+    with open(os.path.join('static', 'about.txt'), 'r',encoding='utf-8') as f:
+        about_text = f.read()
+    # Pass 'about_text' to the template
+    return render_template('homepage.html', about_text=about_text)
+
+@app.route('/about')
+def about():
+    # Read 'about.txt' content
+    with open(os.path.join('static', 'about.txt'), 'r') as f:
+        about_text = f.read()
+    # Pass 'about_text' to the template
+    return render_template('about.html', about_text=about_text)
 
 # Registration route
 @app.route('/register', methods=['GET', 'POST'])

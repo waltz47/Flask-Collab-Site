@@ -1,0 +1,62 @@
+.project-image {
+    width: 100px; /* Smaller width */
+    height: 75px; /* Smaller height */
+    object-fit: cover;
+    margin: 5px;
+    flex: 0 0 auto;
+    max-height: 75px; /* Ensure images are visible */
+    max-width: 100px; /* Ensure images are visible */
+    border: none; /* Remove temporary border */
+}
+
+.project-image.active {
+    display: block;
+}
+
+.prev-button {
+    left: 0;
+}
+
+.next-button {
+    right: 0;
+}
+
+.image-scroll-container {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    scrollbar-width: thin; /* For Firefox */
+}
+.image-scroll-container::-webkit-scrollbar {
+    height: 8px; /* For WebKit browsers */
+}
+.image-scroll-container::-webkit-scrollbar-thumb {
+    background-color: #888; /* Color of the scroll thumb */
+    border-radius: 10px; /* Rounded corners */
+}
+.image-scroll-container::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* Color when hovered */
+}
+
+.image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-start; /* Ensure images align to the left */
+    margin-top: 10px; /* Ensure proper spacing between description and images */
+}
+
+.list-group-item {
+    padding: 15px;
+    /* Adjust padding if necessary */
+}
+
+.list-group-item-action {
+    /* Ensure the display is block to occupy full width */
+    display: block;
+}
+
+.carousel-image {
+    max-height: 500px;
+    object-fit: cover;
+}
