@@ -10,6 +10,8 @@
     <div class="container mt-4">
         <h2 class="mb-4">{{ project.title }}</h2>
         <p><strong>Posted by:</strong> {{ project.owner }}</p>
+        <p><strong>Category:</strong> {{ project.category }}</p>
+        <p><strong>Deadline:</strong> {{ project.deadline }}</p>
         <p>{{ project.description }}</p>
         <div class="image-carousel">
             {% if project.project_images %}

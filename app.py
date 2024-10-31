@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
+from datetime import datetime
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
@@ -15,55 +16,10 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# Files for user and project data
-USER_FILE = 'login.txt'
-PROJECT_FILE = 'projects.txt'
-
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
-
-# Function to save user to the text file
-def save_user(form):
-    username = form['username']
-    password = form['password']
-    full_name = form['full name']
-    user_location = form['location']
-
-    with open(USER_FILE, 'a') as f:
-        f.write(f"{username},{password},{full_name},{user_location}\n")
-
-# Function to save a project to the text file
-def save_project(p):
-    with open(PROJECT_FILE, 'a') as f:
-        f.write(str(p))
-
-# Function to read all projects
-def get_all_projects():
-    projects = []
-    try:
-        with open(PROJECT_FILE, 'r') as f:
-            for line in f:
-                p = Project()
-                p.read_from_string(line)
-                if p.id:  # Ensure project has an ID
-                    projects.append(p)
-    except FileNotFoundError:
-        pass
-    return projects
-
-def get_search_results(q):
-    if len(q) == 0:
-        return []
-    projects = get_all_projects()
-    matching = []
-    for p in projects:
-        if q in p.title.lower() or q in p.description.lower():
-            matching.append(p.serialize())
-
-    return matching
-
 
 # Root route: homepage with two options
 @app.route('/')
@@ -96,7 +52,6 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
-            # Here you might want to start a session for the user
             flash('Logged in successfully.', 'success')
             session['username'] = username
             return redirect(url_for('homepage'))
@@ -114,18 +69,19 @@ def post_project():
         title = request.form['title']
         description = request.form['description']
         owner = session['username']
-        p = Project(title=title, description=description, owner=owner)
+        category = request.form.get('category')
+        deadline = request.form.get('deadline')
+        deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
+        p = Project(title=title, description=description, owner=owner, category=category, deadline=deadline)
         if 'images' in request.files:
             for image in request.files.getlist('images'):
-                if image and allowed_file(image.filename):  # Ensure you have an allowed_file function
+                if image and allowed_file(image.filename):
                     filename = secure_filename(image.filename)
                     image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
                     image.save(image_path)
-                    p.add_image(filename)  # Save only the filename
-        else:
-            print("No images attached")
-
-        save_project(p)
+                    p.add_image(filename)
+        db.session.add(p)
+        db.session.commit()
         return redirect(url_for('browse_projects'))
 
     return render_template('post_project.html')
@@ -139,27 +95,13 @@ def browse_projects():
 def load_more_projects():
     page = request.args.get('page', 1, type=int)
     initial_load = request.args.get('initialLoad', 'false').lower() == 'true'
-    items_per_page = 10 if initial_load else 5  # Load more items initially
-    all_projects = get_all_projects()
-    
-    # Sort projects by title or another attribute to ensure consistent ordering
-    all_projects.sort(key=lambda x: x.title)
-    
-    # Calculate indices
-    start_idx = (page - 1) * items_per_page
-    end_idx = min(start_idx + items_per_page, len(all_projects))  # Prevent going beyond list bounds
-    
-    # Return empty list if start_idx is beyond available projects
-    if start_idx >= len(all_projects):
-        return jsonify([])
-    print(f"loading more project: {start_idx}:{end_idx}")
-    projects = all_projects[start_idx:end_idx]
+    items_per_page = 10 if initial_load else 5
+    projects = Project.query.order_by(Project.title).paginate(page=page, per_page=items_per_page, error_out=False).items
     return jsonify([p.serialize() for p in projects])
 
 @app.route('/view-project/<project_id>')
 def view_project(project_id):
-    all_projects = get_all_projects()
-    project = next((p for p in all_projects if p.id == project_id), None)
+    project = Project.query.get(project_id)
     if project:
         return render_template('view_project.html', project=project)
     else:
@@ -174,9 +116,11 @@ def logout():
 @app.route('/search')
 def search():
     query = request.args.get('q', '').lower()
-    results = get_search_results(query)
-    # print(results)
-    return jsonify(results)
+    projects = Project.query.filter(
+        (Project.title.ilike(f'%{query}%')) | 
+        (Project.description.ilike(f'%{query}%'))
+    ).all()
+    return jsonify([p.serialize() for p in projects])
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)

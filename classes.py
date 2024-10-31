@@ -2,6 +2,7 @@ import json
 import hashlib
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -17,16 +18,27 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+class Project(db.Model):
+    __tablename__ = 'projects'
+    id = db.Column(db.String(64), primary_key=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    owner = db.Column(db.String(80), nullable=False)
+    project_images = db.Column(db.Text, nullable=True)
+    date_created = db.Column(db.DateTime, default=datetime.utcnow)
+    category = db.Column(db.String(50), nullable=True)
+    deadline = db.Column(db.DateTime, nullable=True)
 
-class Project:
-    def __init__(self, title="unnamed project", description="No description", owner="none", project_images=""):
+    def __init__(self, title="unnamed project", description="No description", owner="none", project_images="", category=None, deadline=None):
         unique_string = f"{title}{owner}{description}"
         self.id = hashlib.sha256(unique_string.encode()).hexdigest()  # Consistent unique id
         self.title = title
         self.description = description
         self.owner = owner
-        self.project_images = project_images  # paths to all images attached to the project 
-    
+        self.project_images = project_images
+        self.category = category
+        self.deadline = deadline
+
     def read_from_string(self, s):
         try:
             data = s.strip().split(',')
@@ -40,9 +52,8 @@ class Project:
             self.project_images = data[4] if (len(data) > 4) else ""
         except Exception as e:
             print(f"Unable to read project from string: {s}, Error: {e}")
-    
+
     def __str__(self):
-        # Include id in storage
         return f"{self.id},{self.title},{self.description},{self.owner},{self.project_images}\n"
 
     def serialize(self):
@@ -51,31 +62,34 @@ class Project:
             "title": self.title,
             "description": self.description,
             "owner": self.owner,
-            "images": self.project_images
+            "images": self.project_images,
+            "date_created": self.date_created.isoformat() if self.date_created else None,
+            "category": self.category,
+            "deadline": self.deadline.isoformat() if self.deadline else None
         }
-    
+
     def add_image(self, image_path):
         if self.project_images:
             self.project_images += f",{image_path}"
         else:
             self.project_images = image_path
-    
+
     def remove_image(self, image_path):
-        # Implement proper image removal if needed
         images = self.project_images.split(',') if self.project_images else []
         if image_path in images:
             images.remove(image_path)
             self.project_images = ','.join(images) if images else ""
-    
+
     @classmethod
     def from_json(cls, json_str):
-        # Class method to create a Project instance from a JSON string
         data = json.loads(json_str)
         project = cls(
             data.get('title', "unnamed project"), 
             data.get('description', "No description"),
             data.get('owner', "none"),
-            data.get('images', "")
+            data.get('images', ""),
+            data.get('category', None),
+            data.get('deadline', None)
         )
         return project
 
