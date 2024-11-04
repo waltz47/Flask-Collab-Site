@@ -18,6 +18,11 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+project_users = db.Table('project_users',
+    db.Column('project_id', db.String(64), db.ForeignKey('projects.id'), primary_key=True),
+    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
+)
+
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.String(64), primary_key=True)
@@ -28,6 +33,8 @@ class Project(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     category = db.Column(db.String(50), nullable=True)
     deadline = db.Column(db.DateTime, nullable=True)
+    users = db.relationship('User', secondary=project_users, lazy='subquery',
+                            backref=db.backref('projects', lazy=True))
 
     def __init__(self, title="unnamed project", description="No description", owner="none", project_images="", category=None, deadline=None):
         unique_string = f"{title}{owner}{description}"
@@ -65,7 +72,8 @@ class Project(db.Model):
             "images": self.project_images,
             "date_created": self.date_created.isoformat() if self.date_created else None,
             "category": self.category,
-            "deadline": self.deadline.isoformat() if self.deadline else None
+            "deadline": self.deadline.isoformat() if self.deadline else None,
+            "users": [user.username for user in self.users]
         }
 
     def add_image(self, image_path):

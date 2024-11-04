@@ -84,7 +84,38 @@ def post_project():
         category = request.form.get('category')
         deadline = request.form.get('deadline')
         deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
+        other_users = request.form.get('users', '').split(',')
+        invalid_usernames = []
+        valid_users = []
+
+        # Validate all usernames
+        for username in other_users:
+            username = username.strip()
+
+            if username == owner:
+                continue
+
+            if username:
+                user = User.query.filter_by(username=username).first()
+                if user:
+                    valid_users.append(user)
+                else:
+                    invalid_usernames.append(username)
+
+        if invalid_usernames:
+            flash(f"Invalid usernames: {', '.join(invalid_usernames)}", 'error')
+            return render_template('post_project.html', title=title, description=description, category=category, deadline=deadline, users=request.form['users'])
+
+        # Create and add the project to the session
         p = Project(title=title, description=description, owner=owner, category=category, deadline=deadline)
+        db.session.add(p)
+        user = User.query.filter_by(username=owner).first()
+        if user:
+            p.users.append(user)
+        for user in valid_users:
+            if user not in p.users:
+                p.users.append(user)
+
         if 'images' in request.files:
             for image in request.files.getlist('images'):
                 if image and allowed_file(image.filename):
@@ -92,8 +123,7 @@ def post_project():
                     image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
                     image.save(image_path)
                     p.add_image(filename)
-        db.session.add(p)
-        db.session.commit()
+        db.session.commit()  # Commit the session after all modifications
         return redirect(url_for('browse_projects'))
 
     return render_template('post_project.html')

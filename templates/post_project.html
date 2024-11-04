@@ -7,28 +7,32 @@
         <form method="post" action="/post-project" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="title" class="form-label">Project Title:</label>
-                <input type="text" class="form-control" id="title" name="title" required>
+                <input type="text" class="form-control" id="title" name="title" value="{{ request.form.title or '' }}" required>
             </div>
             <div class="mb-3">
                 <label for="description" class="form-label">Project Description:</label>
-                <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                <textarea class="form-control" id="description" name="description" rows="5" required>{{ request.form.description or '' }}</textarea>
             </div>
             <div class="mb-3">
                 <label for="category" class="form-label">Category:</label>
                 <select class="form-control" id="category" name="category">
                     <option value="">Select a category</option>
-                    <option value="hackathons">Hackathons</option>
-                    <option value="game jams">Game Jams</option>
-                    <option value="events">Events</option>
+                    <option value="hackathons" {% if request.form.category == 'hackathons' %}selected{% endif %}>Hackathons</option>
+                    <option value="game jams" {% if request.form.category == 'game jams' %}selected{% endif %}>Game Jams</option>
+                    <option value="events" {% if request.form.category == 'events' %}selected{% endif %}>Events</option>
                 </select>
             </div>
             <div class="mb-3">
                 <label for="deadline" class="form-label">Deadline:</label>
-                <input type="date" class="form-control" id="deadline" name="deadline">
+                <input type="date" class="form-control" id="deadline" name="deadline" value="{{ request.form.deadline or '' }}">
             </div>
             <div class="mb-3">
                 <label for="images" class="form-label">Project Images:</label>
                 <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+            </div>
+            <div class="mb-3">
+                <label for="users" class="form-label">Other Users (comma-separated usernames):</label>
+                <input type="text" class="form-control" id="users" name="users" value="{{ request.form.users or '' }}">
             </div>
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">Post Project</button>

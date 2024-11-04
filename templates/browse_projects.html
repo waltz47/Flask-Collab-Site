@@ -25,7 +25,7 @@
 
     function createProjectElement(project) {
         return `<a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-1" id="project-${project.id}" style="display: block; text-decoration: none;">
-<div class="d-flex w-100 justify-content-between"><h5 class="mb-1">${project.title}</h5><small>Posted by: ${project.owner}</small></div><p class="mb-0">${project.description}</p>${project.images ? `<div class="image-grid mt-2">${project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail project-image" alt="Project Image" onclick="event.stopPropagation()">`).join('')}</div>` : ''}</a>`;
+<div class="d-flex w-100 justify-content-between"><h5 class="mb-1">${project.title}</h5><small>Posted by: ${project.owner} (and ${project.users.length} others)</small></div><p class="mb-0">${project.description}</p>${project.images ? `<div class="image-grid mt-2">${project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail project-image" alt="Project Image" onclick="event.stopPropagation()">`).join('')}</div>` : ''}</a>`;
     }
 
     async function loadMoreProjects() {

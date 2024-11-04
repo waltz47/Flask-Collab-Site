@@ -6,6 +6,9 @@
 <p><strong>Category:</strong> {{ project.category }}</p>
 <p><strong>Deadline:</strong> {{ project.deadline }}</p>
 <p>{{ project.description }}</p>
+{% if project.users|length > 1 %}
+    <p><strong>Other Users:</strong> {{ project.users|rejectattr('username', 'equalto', project.owner)|map(attribute='username')|join(', ') }}</p>
+{% endif %}
 <div id="projectCarousel" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
         {% if project.project_images %}
