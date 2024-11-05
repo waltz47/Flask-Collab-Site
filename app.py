@@ -3,6 +3,7 @@ from classes import *
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
+from flask_migrate import Migrate
 import os
 from datetime import datetime
 
@@ -13,6 +14,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
+migrate = Migrate(app, db)
+
 with app.app_context():
     db.create_all()
 
@@ -21,7 +24,6 @@ ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_IMAGE_EXTENSIONS
 
-# Root route: homepage with two options
 @app.route('/')
 @app.route('/home')
 def homepage():
@@ -148,6 +150,70 @@ def view_project(project_id):
         return render_template('view_project.html', project=project)
     else:
         return "Project not found", 404
+
+@app.route('/edit-project/<project_id>', methods=['GET', 'POST'])
+def edit_project(project_id):
+    project = Project.query.get(project_id)
+    if not project:
+        return "Project not found", 404
+
+    if 'username' not in session or (session['username'] != project.owner and session['username'] not in [user.username for user in project.users]):
+        return "You do not have permission to edit this project", 403
+
+    if request.method == 'POST':
+        project.title = request.form['title']
+        project.description = request.form['description']
+        project.category = request.form.get('category')
+        deadline = request.form.get('deadline')
+        project.deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
+        other_users = request.form.get('users', '').split(',')
+        invalid_usernames = []
+        valid_users = []
+
+        # Validate all usernames
+        for username in other_users:
+            username = username.strip()
+
+            if username == project.owner:
+                continue
+
+            if username:
+                user = User.query.filter_by(username=username).first()
+                if user:
+                    valid_users.append(user)
+                else:
+                    invalid_usernames.append(username)
+
+        if invalid_usernames:
+            flash(f"Invalid usernames: {', '.join(invalid_usernames)}", 'error')
+            return render_template('edit_project.html', project=project)
+
+        # Ensure the owner is always included
+        project.users = [User.query.filter_by(username=project.owner).first()]
+        for user in valid_users:
+            if user not in project.users:
+                project.users.append(user)
+
+        if 'images' in request.files:
+            for image in request.files.getlist('images'):
+                if image and allowed_file(image.filename):
+                    filename = secure_filename(image.filename)
+                    image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
+                    image.save(image_path)
+                    project.add_image(filename)
+
+        db.session.commit()
+        return redirect(url_for('view_project', project_id=project.id))
+
+    return render_template('edit_project.html', project=project)
+
+@app.route('/profile/<username>')
+def view_profile(username):
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return render_template('view_profile.html', user=user)
+    else:
+        return "User not found", 404
 
 # Logout route
 @app.route('/logout')

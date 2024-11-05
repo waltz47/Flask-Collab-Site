@@ -33,6 +33,7 @@ class Project(db.Model):
     date_created = db.Column(db.DateTime, default=datetime.utcnow)
     category = db.Column(db.String(50), nullable=True)
     deadline = db.Column(db.DateTime, nullable=True)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     users = db.relationship('User', secondary=project_users, lazy='subquery',
                             backref=db.backref('projects', lazy=True))
 
@@ -73,7 +74,8 @@ class Project(db.Model):
             "date_created": self.date_created.isoformat() if self.date_created else None,
             "category": self.category,
             "deadline": self.deadline.isoformat() if self.deadline else None,
-            "users": [user.username for user in self.users]
+            "users": [user.username for user in self.users],
+            "last_updated": self.last_updated.strftime('%Y-%m-%d %H:%M') if self.last_updated else None
         }
 
     def add_image(self, image_path):

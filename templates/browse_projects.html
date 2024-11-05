@@ -15,7 +15,7 @@
     </div>
 </div>
 <div id="sentinel" class="mt-4"></div>
-<a href="/" class="btn btn-link">Back to homepage</a>
+<a href="/" class="btn btn-primary">Back to homepage</a>
 
 <script>
     let currentPage = 1;
@@ -24,8 +24,10 @@
     let allProjectsLoaded = false;
 
     function createProjectElement(project) {
+        const otherUsersCount = project.users.length - 1;
+        const otherUsersText = otherUsersCount > 0 ? ` (and ${otherUsersCount} others)` : '';
         return `<a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-1" id="project-${project.id}" style="display: block; text-decoration: none;">
-<div class="d-flex w-100 justify-content-between"><h5 class="mb-1">${project.title}</h5><small>Posted by: ${project.owner} (and ${project.users.length} others)</small></div><p class="mb-0">${project.description}</p>${project.images ? `<div class="image-grid mt-2">${project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail project-image" alt="Project Image" onclick="event.stopPropagation()">`).join('')}</div>` : ''}</a>`;
+<div class="d-flex w-100 justify-content-between"><h5 class="mb-1">${project.title}</h5><small>Posted by: ${project.owner}${otherUsersText}</small></div><p class="mb-0">${project.description}</p><small>Last Updated: ${new Date(project.last_updated).toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}</small>${project.images ? `<div class="image-grid mt-2">${project.images.split(',').map(image => `<img src="/static/uploads/${image.trim()}" class="img-fluid img-thumbnail project-image" alt="Project Image" onclick="event.stopPropagation()">`).join('')}</div>` : ''}</a>`;
     }
 
     async function loadMoreProjects() {
