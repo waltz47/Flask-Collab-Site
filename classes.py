@@ -11,12 +11,22 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
+    full_name = db.Column(db.String(120), nullable=True)
+    location = db.Column(db.String(120), nullable=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def serialize(self):
+        return {
+            'username': self.username,
+            'full_name': self.full_name,
+            'location': self.location,
+            'projects': [project.serialize() for project in self.projects]
+        }
 
 project_users = db.Table('project_users',
     db.Column('project_id', db.String(64), db.ForeignKey('projects.id'), primary_key=True),

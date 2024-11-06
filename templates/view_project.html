@@ -2,13 +2,19 @@
 {% block title %}View Project{% endblock %}
 {% block content %}
 <h2 class="mb-4">{{ project.title }}</h2>
-<p><strong>Posted by:</strong> {{ project.owner }}</p>
+<p><strong>Posted by:</strong> <a href="/user/{{ project.owner }}">{{ project.owner }}</a></p>
 <p><strong>Category:</strong> {{ project.category }}</p>
 <p><strong>Deadline:</strong> {{ project.deadline }}</p>
 <p><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
 <p>{{ project.description }}</p>
 {% if project.users|length > 1 %}
-    <p><strong>Other Users:</strong> {{ project.users|rejectattr('username', 'equalto', project.owner)|map(attribute='username')|join(', ') }}</p>
+    <p><strong>Other Users:</strong>
+        {% for user in project.users %}
+            {% if user.username != project.owner %}
+                <a href="/user/{{ user.username }}">{{ user.username }}</a>{% if not loop.last %}, {% endif %}
+            {% endif %}
+        {% endfor %}
+    </p>
 {% endif %}
 <div id="projectCarousel" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">

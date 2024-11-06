@@ -3,7 +3,7 @@ from classes import *
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
-from flask_migrate import Migrate
+from flask_migrate import Migrate  # Ensure this is imported
 import os
 from datetime import datetime
 
@@ -14,7 +14,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
-migrate = Migrate(app, db)
+migrate = Migrate(app, db)  # Ensure this is initialized
 
 with app.app_context():
     db.create_all()
@@ -207,11 +207,11 @@ def edit_project(project_id):
 
     return render_template('edit_project.html', project=project)
 
-@app.route('/profile/<username>')
-def view_profile(username):
+@app.route('/user/<username>')
+def user_profile(username):
     user = User.query.filter_by(username=username).first()
     if user:
-        return render_template('view_profile.html', user=user)
+        return render_template('user_profile.html', user=user)
     else:
         return "User not found", 404
 
