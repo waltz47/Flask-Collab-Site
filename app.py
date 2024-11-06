@@ -125,6 +125,16 @@ def post_project():
                     image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
                     image.save(image_path)
                     p.add_image(filename)
+
+        # Handle milestones
+        milestones_descriptions = request.form.getlist('milestone_descriptions')
+        milestones_deadlines = request.form.getlist('milestone_deadlines')
+        for desc, dl in zip(milestones_descriptions, milestones_deadlines):
+            if desc.strip():
+                deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
+                milestone = Milestone(description=desc.strip(), deadline=deadline)
+                p.milestones.append(milestone)
+
         db.session.commit()  # Commit the session after all modifications
         return redirect(url_for('browse_projects'))
 
@@ -147,6 +157,14 @@ def load_more_projects():
 def view_project(project_id):
     project = Project.query.get(project_id)
     if project:
+        # Determine milestone statuses
+        for milestone in project.milestones:
+            if milestone.completed:
+                milestone.status = 'completed'
+            elif milestone.deadline and milestone.deadline < datetime.utcnow():
+                milestone.status = 'overdue'
+            else:
+                milestone.status = 'upcoming'
         return render_template('view_project.html', project=project)
     else:
         return "Project not found", 404
@@ -201,6 +219,18 @@ def edit_project(project_id):
                     image_path = os.path.join(app.config['UPLOAD_DIR'], filename)
                     image.save(image_path)
                     project.add_image(filename)
+
+        # Remove existing milestones
+        project.milestones.clear()
+        db.session.commit()
+        # Add updated milestones
+        milestones_descriptions = request.form.getlist('milestone_descriptions')
+        milestones_deadlines = request.form.getlist('milestone_deadlines')
+        for desc, dl in zip(milestones_descriptions, milestones_deadlines):
+            if desc.strip():
+                deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
+                milestone = Milestone(description=desc.strip(), deadline=deadline)
+                project.milestones.append(milestone)
 
         db.session.commit()
         return redirect(url_for('view_project', project_id=project.id))

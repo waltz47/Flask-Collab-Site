@@ -16,6 +16,20 @@
         {% endfor %}
     </p>
 {% endif %}
+{% if project.milestones %}
+    <h3>Milestones</h3>
+    <ul class="list-group">
+        {% for milestone in project.milestones %}
+            <li class="list-group-item 
+                {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.status == 'overdue' %}bg-danger text-white{% else %}bg-light{% endif %}">
+                <strong>{{ milestone.description }}</strong>
+                {% if milestone.deadline %}
+                    <span class="float-end">Deadline: {{ milestone.deadline.strftime('%Y-%m-%d') }}</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+{% endif %}
 <div id="projectCarousel" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
         {% if project.project_images %}

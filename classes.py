@@ -33,6 +33,24 @@ project_users = db.Table('project_users',
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
 
+class Milestone(db.Model):
+    __tablename__ = 'milestones'
+    id = db.Column(db.Integer, primary_key=True)
+    description = db.Column(db.Text, nullable=False)
+    deadline = db.Column(db.DateTime, nullable=True)
+    completed = db.Column(db.Boolean, default=False)
+    completed_date = db.Column(db.DateTime, nullable=True)
+    project_id = db.Column(db.String(64), db.ForeignKey('projects.id'), nullable=False)
+
+    def serialize(self):
+        return {
+            'id': self.id,
+            'description': self.description,
+            'deadline': self.deadline.isoformat() if self.deadline else None,
+            'completed': self.completed,
+            'completed_date': self.completed_date.isoformat() if self.completed_date else None
+        }
+
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.String(64), primary_key=True)
@@ -46,6 +64,7 @@ class Project(db.Model):
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     users = db.relationship('User', secondary=project_users, lazy='subquery',
                             backref=db.backref('projects', lazy=True))
+    milestones = db.relationship('Milestone', backref='project', lazy=True)
 
     def __init__(self, title="unnamed project", description="No description", owner="none", project_images="", category=None, deadline=None):
         unique_string = f"{title}{owner}{description}"
@@ -85,7 +104,8 @@ class Project(db.Model):
             "category": self.category,
             "deadline": self.deadline.isoformat() if self.deadline else None,
             "users": [user.username for user in self.users],
-            "last_updated": self.last_updated.strftime('%Y-%m-%d %H:%M') if self.last_updated else None
+            "last_updated": self.last_updated.strftime('%Y-%m-%d %H:%M') if self.last_updated else None,
+            "milestones": [milestone.serialize() for milestone in self.milestones]
         }
 
     def add_image(self, image_path):

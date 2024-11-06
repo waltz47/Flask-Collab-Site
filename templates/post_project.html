@@ -34,6 +34,14 @@
                 <label for="users" class="form-label">Other Users (comma-separated usernames):</label>
                 <input type="text" class="form-control" id="users" name="users" value="{{ request.form.users or '' }}">
             </div>
+            <h3>Add Milestones (Optional)</h3>
+            <div id="milestones-container">
+                <div class="milestone-item">
+                    <input type="text" name="milestone_descriptions" placeholder="Milestone Description" class="form-control mb-2">
+                    <input type="date" name="milestone_deadlines" class="form-control mb-2">
+                </div>
+            </div>
+            <button type="button" id="add-milestone" class="btn btn-secondary mb-3">Add Another Milestone</button>
             <div class="d-grid gap-2">
                 <button type="submit" class="btn btn-primary">Post Project</button>
             </div>
@@ -43,4 +51,16 @@
         </p>
     </div>
 </div>
+<script>
+    document.getElementById('add-milestone').addEventListener('click', function() {
+        const container = document.getElementById('milestones-container');
+        const newMilestone = document.createElement('div');
+        newMilestone.classList.add('milestone-item');
+        newMilestone.innerHTML = `
+            <input type="text" name="milestone_descriptions" placeholder="Milestone Description" class="form-control mb-2">
+            <input type="date" name="milestone_deadlines" class="form-control mb-2">
+        `;
+        container.appendChild(newMilestone);
+    });
+</script>
 {% endblock %}
