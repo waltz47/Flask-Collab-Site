@@ -1,3 +1,4 @@
+import argparse  # Add this import
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from classes import *
 from werkzeug.utils import secure_filename
@@ -142,6 +143,7 @@ def post_project():
             if desc.strip():
                 deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
                 milestone = Milestone(description=desc.strip(), deadline=deadline)
+                milestone.completed = request.form.get('milestone_completed_new') == 'on'
                 p.milestones.append(milestone)
 
         db.session.commit()  # Commit the session after all modifications
@@ -229,17 +231,40 @@ def edit_project(project_id):
                     image.save(image_path)
                     project.add_image(filename)
 
-        # Remove existing milestones
-        project.milestones.clear()
-        db.session.commit()
-        # Add updated milestones
+        # Get milestone data from form
+        milestone_ids = request.form.getlist('milestone_ids')
         milestones_descriptions = request.form.getlist('milestone_descriptions')
         milestones_deadlines = request.form.getlist('milestone_deadlines')
-        for desc, dl in zip(milestones_descriptions, milestones_deadlines):
-            if desc.strip():
-                deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
-                milestone = Milestone(description=desc.strip(), deadline=deadline)
-                project.milestones.append(milestone)
+
+        # Ensure all lists are of the same length
+        if not (len(milestone_ids) == len(milestones_descriptions) == len(milestones_deadlines)):
+            flash("Mismatch in milestone data.", 'error')
+            return render_template('edit_project.html', project=project)
+
+        # Update existing milestones
+        for m_id, desc, dl in zip(milestone_ids, milestones_descriptions, milestones_deadlines):
+            deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
+            if m_id:
+                # Update existing milestone
+                milestone = Milestone.query.get(int(m_id))
+                if milestone and milestone in project.milestones:
+                    milestone.description = desc.strip()
+                    milestone.deadline = deadline
+                    milestone.completed = request.form.get(f'milestone_completed_{m_id}') == 'on'
+            else:
+                # Add new milestone
+                if desc.strip():
+                    new_milestone = Milestone(description=desc.strip(), deadline=deadline)
+                    new_milestone.completed = request.form.get('milestone_completed_new') == 'on'
+                    project.milestones.append(new_milestone)
+                    db.session.add(new_milestone)  # Ensure new milestone is added to the session
+
+        # Remove milestones that were deleted in the form
+        form_milestone_ids = [int(mid) for mid in milestone_ids if mid]
+        for milestone in project.milestones[:]:
+            if milestone.id not in form_milestone_ids and str(milestone.id) not in milestone_ids:
+                project.milestones.remove(milestone)
+                db.session.delete(milestone)
 
         db.session.commit()
         return redirect(url_for('view_project', project_id=project.id))
@@ -307,4 +332,8 @@ def contact_us():
     return render_template('contact_us.html')
 
 if __name__ == '__main__':
-    app.run()
+    parser = argparse.ArgumentParser(description='Run the Flask application.')
+    parser.add_argument('--debug', action='store_true', help='Run the application in debug mode')
+    args = parser.parse_args()
+
+    app.run(debug=args.debug)

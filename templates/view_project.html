@@ -44,7 +44,7 @@
                 {% if project.project_images %}
                     {% for image in project.project_images.split(',') %}
                         <div class="carousel-item {% if loop.first %}active{% endif %}">
-                            <img src="/static/uploads/{{ image.strip() }}" class="d-block w-100 img-fluid img-thumbnail project-image" alt="Project Image">
+                            <img src="/static/uploads/{{ image.strip() }}" class="d-block w-100 img-fluid project-image" alt="Project Image">
                         </div>
                     {% endfor %}
                 {% else %}

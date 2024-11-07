@@ -57,15 +57,15 @@ body {
 }
 
 .project-thumbnail {
-    width: 150px;
-    height: 150px;
+    width: 200px;
+    height: 180px;
     object-fit: cover;
 }
 
 .project-image {
-    width: 500px;
-    height: 400px;
-    object-fit: cover;
+    width: 700px;
+    height: 700px;
+    object-fit: contain;
 }
 
 .image-grid {

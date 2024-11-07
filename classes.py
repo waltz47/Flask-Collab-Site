@@ -35,7 +35,7 @@ project_users = db.Table('project_users',
 
 class Milestone(db.Model):
     __tablename__ = 'milestones'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     description = db.Column(db.Text, nullable=False)
     deadline = db.Column(db.DateTime, nullable=True)
     completed = db.Column(db.Boolean, default=False)
@@ -64,7 +64,12 @@ class Project(db.Model):
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     users = db.relationship('User', secondary=project_users, lazy='subquery',
                             backref=db.backref('projects', lazy=True))
-    milestones = db.relationship('Milestone', backref='project', lazy=True)
+    milestones = db.relationship(
+        'Milestone',
+        backref='project',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
 
     def __init__(self, title="unnamed project", description="No description", owner="none", project_images="", category=None, deadline=None):
         unique_string = f"{title}{owner}{description}"
