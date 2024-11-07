@@ -1,0 +1,58 @@
+/* ...existing code... */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+#page-content {
+    flex: 1;
+}
+
+.nav-button {
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-button:hover {
+    background-color: #0056b3;
+    color: #fff;
+}
+
+.footer {
+    background-color: #f8f9fa;
+    width: 100%;
+}
+
+.footer .text-muted {
+    text-align: center;
+}
+
+.footer .text-muted a {
+    color: #6c757d;
+    margin: 0 5px;
+    text-decoration: none;
+}
+
+.footer .text-muted a:hover {
+    color: #343a40;
+}
+
+/* Styles for the FAQ page */
+.accordion-button {
+    font-weight: bold;
+}
+
+.accordion-body {
+    background-color: #f8f9fa;
+}
+
+/* Styles for the Contact Us page */
+.form-label {
+    font-weight: bold;
+}
+/* ...existing code... */

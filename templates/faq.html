@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}FAQ - Synergy{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Frequently Asked Questions</h1>
+    <div class="accordion" id="faqAccordion">
+        <!-- Question 1 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                    What is Synergy?
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    Synergy is a platform that allows you to find collaborators for game jams, hackathons, and other virtual events.
+                </div>
+            </div>
+        </div>
+        <!-- Question 2 -->
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    How do I join a project?
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                    You can browse available projects and contact the project owner to express your interest in joining.
+                </div>
+            </div>
+        </div>
+        <!-- Additional FAQ items can be added here -->
+    </div>
+</div>
+{% endblock %}

@@ -6,6 +6,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from flask_migrate import Migrate  # Ensure this is imported
 import os
 from datetime import datetime
+from flask_mail import Mail, Message  # Ensure Flask-Mail is installed
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
@@ -15,6 +16,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Ensure this is initialized
+
+# Initialize Flask-Mail
+app.config['MAIL_SERVER'] = 'smtp.example.com'  # Replace with your SMTP server
+app.config['MAIL_PORT'] = 587  # Update if different
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your_email@example.com'  # Replace with your email
+app.config['MAIL_PASSWORD'] = 'your_email_password'  # Replace with your email password
+mail = Mail(app)
 
 with app.app_context():
     db.create_all()
@@ -259,6 +268,43 @@ def search():
         (Project.description.ilike(f'%{query}%'))
     ).all()
     return jsonify([p.serialize() for p in projects])
+
+@app.route('/complete-milestone/<int:milestone_id>', methods=['POST'])
+def complete_milestone(milestone_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    milestone = Milestone.query.get(milestone_id)
+    if not milestone:
+        return "Milestone not found", 404
+    project = Project.query.get(milestone.project_id)
+    if session['username'] != project.owner:
+        return "You do not have permission to complete this milestone", 403
+    milestone.completed = True
+    milestone.completed_date = datetime.utcnow()
+    db.session.commit()
+    return redirect(url_for('view_project', project_id=project.id))
+
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+@app.route('/contact-us', methods=['GET', 'POST'])
+def contact_us():
+    if request.method == 'POST':
+        # Gather form data
+        name = request.form['name']
+        email = request.form['email']
+        message_content = request.form['message']
+
+        # Send email (configure mail settings properly)
+        msg = Message(subject=f"Contact Us Message from {name}",
+                      sender=app.config['MAIL_USERNAME'],
+                      recipients=['support@example.com'])  # Replace with your support email
+        msg.body = f"From: {name} <{email}>\n\n{message_content}"
+        mail.send(msg)
+        flash('Your message has been sent successfully!', 'success')
+        return redirect(url_for('contact_us'))
+    return render_template('contact_us.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True)
