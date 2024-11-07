@@ -55,4 +55,27 @@ body {
 .form-label {
     font-weight: bold;
 }
+
+.project-thumbnail {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.project-image {
+    width: 500px;
+    height: 400px;
+    object-fit: cover;
+}
+
+.image-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.image-grid img {
+    flex: 1 1 calc(25% - 10px);
+    max-width: calc(25% - 10px);
+}
 /* ...existing code... */
