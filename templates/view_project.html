@@ -3,11 +3,13 @@
 {% block content %}
 <div class="container mt-5">
     <div class="card project-card p-4">
-        <h2 class="mb-4">{{ project.title }}</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>{{ project.title }}</h2>
+            <p class="mb-0"><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
+        </div>
         <p><strong>Posted by:</strong> <a href="/user/{{ project.owner }}" class="user-link">{{ project.owner }}</a></p>
         <p><strong>Category:</strong> {{ project.category }}</p>
         <p><strong>Deadline:</strong> {{ project.deadline }}</p>
-        <p><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
         <p>{{ project.description }}</p>
         {% if project.users|length > 1 %}
             <p><strong>Other Users:</strong>

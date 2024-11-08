@@ -6,14 +6,28 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
 from flask_migrate import Migrate  # Ensure this is imported
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_mail import Mail, Message  # Ensure Flask-Mail is installed
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
 app.config['UPLOAD_DIR'] = 'static/uploads'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Secure session cookies
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=True,
+    REMEMBER_COOKIE_HTTPONLY=True,
+    REMEMBER_COOKIE_DURATION=timedelta(days=14)
+)
+
+# Initialize CSRF protection
+csrf = CSRFProtect(app)
 
 db.init_app(app)
 migrate = Migrate(app, db)  # Ensure this is initialized
@@ -25,6 +39,13 @@ app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = 'your_email@example.com'  # Replace with your email
 app.config['MAIL_PASSWORD'] = 'your_email_password'  # Replace with your email password
 mail = Mail(app)
+
+# Initialize Flask-Limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]
+)
 
 with app.app_context():
     db.create_all()
@@ -72,6 +93,7 @@ def register():
 
 # Login route
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("50 per minute")
 def login():
     if request.method == 'POST':
         username = request.form['username']

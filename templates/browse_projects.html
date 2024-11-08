@@ -30,16 +30,16 @@
             <a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-3 text-decoration-none project-card">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1">${project.title}</h5>
+                    <small>
+                        Last Updated: ${new Date(project.last_updated).toLocaleString('en-US', { 
+                            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
+                        })}
+                    </small>
                 </div>
                 <p class="mb-1">${project.description}</p>
                 <div class="d-flex w-100 justify-content-between">
                     <small>
                         Posted by: ${project.owner}${otherUsersText}
-                    </small>
-                    <small>
-                        Last Updated: ${new Date(project.last_updated).toLocaleString('en-US', { 
-                            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
-                        })}
                     </small>
                 </div>
                 ${project.images ? `

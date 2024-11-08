@@ -5,6 +5,7 @@
     <div class="col-md-6">
         <h2 class="text-center mb-4">Registration Form</h2>
         <form method="post" action="/register">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label for="fullName" class="form-label">Full Name:</label>
                 <input type="text" class="form-control" id="fullName" name="full_name" required>
