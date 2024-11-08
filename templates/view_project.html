@@ -2,74 +2,76 @@
 {% block title %}View Project{% endblock %}
 {% block content %}
 <div class="container mt-5">
-    <h2 class="mb-4">{{ project.title }}</h2>
-    <p><strong>Posted by:</strong> <a href="/user/{{ project.owner }}">{{ project.owner }}</a></p>
-    <p><strong>Category:</strong> {{ project.category }}</p>
-    <p><strong>Deadline:</strong> {{ project.deadline }}</p>
-    <p><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
-    <p>{{ project.description }}</p>
-    {% if project.users|length > 1 %}
-        <p><strong>Other Users:</strong>
-            {% for user in project.users %}
-                {% if user.username != project.owner %}
-                    <a href="/user/{{ user.username }}">{{ user.username }}</a>{% if not loop.last %}, {% endif %}
-                {% endif %}
-            {% endfor %}
-        </p>
-    {% endif %}
-    {% if project.milestones %}
-        <h3 class="mt-5 mb-3">Milestones</h3>
-        <ul class="list-group mb-4">
-            {% for milestone in project.milestones %}
-                <li class="list-group-item d-flex justify-content-between align-items-center
-                    {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.status == 'overdue' %}bg-danger text-white{% else %}bg-light{% endif %}">
-                    <div>
-                        <strong>{{ milestone.description }}</strong>
-                        {% if milestone.deadline %}
-                            <div>Deadline: {{ milestone.deadline.strftime('%Y-%m-%d') }}</div>
-                        {% endif %}
-                    </div>
-                    {% if session['username'] == project.owner and not milestone.completed %}
-                        <form method="post" action="/complete-milestone/{{ milestone.id }}" class="mb-0">
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to mark this milestone as complete?');">Mark as Complete</button>
-                        </form>
+    <div class="card project-card p-4">
+        <h2 class="mb-4">{{ project.title }}</h2>
+        <p><strong>Posted by:</strong> <a href="/user/{{ project.owner }}" class="user-link">{{ project.owner }}</a></p>
+        <p><strong>Category:</strong> {{ project.category }}</p>
+        <p><strong>Deadline:</strong> {{ project.deadline }}</p>
+        <p><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
+        <p>{{ project.description }}</p>
+        {% if project.users|length > 1 %}
+            <p><strong>Other Users:</strong>
+                {% for user in project.users %}
+                    {% if user.username != project.owner %}
+                        <a href="/user/{{ user.username }}" class="user-link">{{ user.username }}</a>{% if not loop.last %}, {% endif %}
                     {% endif %}
-                </li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    {% if project.project_images %}
-        <div id="projectCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-            <div class="carousel-inner">
-                {% if project.project_images %}
-                    {% for image in project.project_images.split(',') %}
-                        <div class="carousel-item {% if loop.first %}active{% endif %}">
-                            <img src="/static/uploads/{{ image.strip() }}" class="d-block w-100 img-fluid project-image" alt="Project Image">
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="carousel-item active">
-                        <p>No image for this project.</p>
-                    </div>
-                {% endif %}
-            </div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#projectCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#projectCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
-        </div>
-    {% else %}
-        <p>No image for this project.</p>
-    {% endif %}
-    <div class="mt-4">
-        {% if session['username'] == project.owner or session['username'] in project.users|map(attribute='username') %}
-            <a href="/edit-project/{{ project.id }}" class="btn btn-primary me-2">Edit Project</a>
+                {% endfor %}
+            </p>
         {% endif %}
-        <a href="/browse-projects" class="btn btn-secondary">Back to Browse Projects</a>
+        {% if project.milestones %}
+            <h3 class="mt-5 mb-3">Milestones</h3>
+            <ul class="list-group mb-4">
+                {% for milestone in project.milestones %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center
+                        {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.status == 'overdue' %}bg-danger text-white{% else %}bg-light{% endif %}">
+                        <div>
+                            <strong>{{ milestone.description }}</strong>
+                            {% if milestone.deadline %}
+                                <div>Deadline: {{ milestone.deadline.strftime('%Y-%m-%d') }}</div>
+                            {% endif %}
+                        </div>
+                        {% if session['username'] == project.owner and not milestone.completed %}
+                            <form method="post" action="/complete-milestone/{{ milestone.id }}" class="mb-0">
+                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to mark this milestone as complete?');">Mark as Complete</button>
+                            </form>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if project.project_images %}
+            <div id="projectCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    {% if project.project_images %}
+                        {% for image in project.project_images.split(',') %}
+                            <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                <img src="/static/uploads/{{ image.strip() }}" class="d-block w-100 img-fluid project-image" alt="Project Image">
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="carousel-item active">
+                            <p>No image for this project.</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <button class="carousel-control-prev" type="button" data-bs-target="#projectCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#projectCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+        {% else %}
+            <p>No images for this project.</p>
+        {% endif %}
+        <div class="mt-4 mb-5">
+            {% if session['username'] == project.owner or session['username'] in project.users|map(attribute='username') %}
+                <a href="/edit-project/{{ project.id }}" class="btn btn-primary me-2">Edit Project</a>
+            {% endif %}
+            <a href="/browse-projects" class="btn btn-secondary">Back to Browse Projects</a>
+        </div>
     </div>
 </div>
 {% endblock %}

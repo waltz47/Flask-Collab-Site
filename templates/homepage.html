@@ -2,18 +2,19 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="display-4">Welcome to Synergy.</h1>
-    <p class="lead">This platform allows you to find people to game jams, hackathons and other virtual events. </p>
-    
-    <ul class="list-unstyled">
-        <li><a href="/browse-projects" class="btn btn-primary">Browse projects</a></li>
-        <li><a href="/post-project" class="btn btn-primary mt-1">Post your own requirements</a></li>
-    </ul>
-    
-    {% if 'username' in session %}
-        <p class="mt-3">Logged in as {{ session['username'] }}. <a href="/logout" class="btn btn-link">Logout</a></p>
-    {% else %}
-        <p class="mt-3"><a href="/login" class="btn btn-success">Login</a> or <a href="/register" class="btn btn-info">Register</a> to get started!</p>
-    {% endif %}
+    <div class="jumbotron text-center">
+        <h1 class="display-4">Welcome to Synergy.</h1>
+        <p class="lead">This platform allows you to find people to game jams, hackathons and other virtual events.</p>
+        <hr class="my-4">
+        <ul class="list-unstyled">
+            <li><a href="/browse-projects" class="btn btn-primary btn-lg">Browse projects</a></li>
+            <li><a href="/post-project" class="btn btn-primary btn-lg mt-3">Post your own requirements</a></li>
+        </ul>
+        {% if 'username' in session %}
+            <p class="mt-3">Logged in as {{ session['username'] }}. <a href="/logout" class="btn btn-link">Logout</a></p>
+        {% else %}
+            <p class="mt-3"><a href="/login" class="btn btn-success btn-lg">Login</a> or <a href="/register" class="btn btn-info btn-lg">Register</a> to get started!</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

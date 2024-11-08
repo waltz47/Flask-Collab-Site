@@ -15,7 +15,7 @@
     </div>
 </div>
 <div id="sentinel" class="mt-4"></div>
-<a href="/" class="btn btn-primary">Back to homepage</a>
+<a href="/" class="btn btn-primary mb-3">Back to homepage</a>
 
 <script>
     let currentPage = 1;
@@ -27,7 +27,7 @@
         const otherUsersCount = project.users.length - 1;
         const otherUsersText = otherUsersCount > 0 ? ` (and ${otherUsersCount} others)` : '';
         return `
-            <a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-1 text-decoration-none">
+            <a href="/view-project/${project.id}" class="list-group-item list-group-item-action mb-3 text-decoration-none project-card">
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1">${project.title}</h5>
                 </div>

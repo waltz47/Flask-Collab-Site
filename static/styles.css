@@ -3,6 +3,11 @@ html, body {
     height: 100%;
     margin: 0;
     padding: 0;
+    background: url('/static/others/cyberpunk_bg2.jpg') no-repeat center center fixed;
+    background-size: cover;
+    background-color: rgba(0, 0, 0, 0.3); /* Increase transparency */
+    background-blend-mode: darken; /* Blend the overlay with the background image */
+    color: white; /* Make text color white */
 }
 
 body {
@@ -14,13 +19,15 @@ body {
     flex: 1;
 }
 
-.nav-button {
+.nav-button, .btn {
     transition: background-color 0.3s, color 0.3s;
 }
 
-.nav-button:hover {
+.nav-button:hover, .btn:hover {
     background-color: #0056b3;
     color: #fff;
+    border-radius: 5px; /* Add rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add shadow effect */
 }
 
 .footer {
@@ -77,5 +84,45 @@ body {
 .image-grid img {
     flex: 1 1 calc(25% - 10px);
     max-width: calc(25% - 10px);
+}
+
+.project-card {
+    background-color: rgba(255, 255, 255, 0.8); /* White with transparency */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: transform 0.2s, box-shadow 0.2s; /* Smooth transition */
+    margin-bottom: 1rem; /* Reduce spacing between cards */
+}
+
+.project-card:hover {
+    transform: translateY(-5px); /* Slight lift on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+}
+
+.user-link {
+    color: #0056b3;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+.user-link:hover {
+    color: #003d80;
+    text-decoration: underline;
+}
+
+.profile-card {
+    background-color: rgba(255, 255, 255, 0.8); /* White with transparency */
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Light border */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    margin-bottom: 1rem; /* Reduce spacing between cards */
+}
+
+/* Remove hover effect for profile card */
+.profile-card:hover {
+    transform: none; /* No lift on hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Keep the same shadow */
 }
 /* ...existing code... */

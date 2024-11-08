@@ -57,14 +57,16 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        full_name = request.form.get('full_name')
+        location = request.form.get('location')
         if User.query.filter_by(username=username).first():
-            print('Username already exists.', 'error')
+            flash('Username already exists.', 'error')
             return redirect(url_for('register'))
-        new_user = User(username=username)
+        new_user = User(username=username, full_name=full_name, location=location)
         new_user.set_password(password)
         db.session.add(new_user)
         db.session.commit()
-        print('Registration successful. Please log in.', 'success')
+        flash('Registration successful. Please log in.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
 

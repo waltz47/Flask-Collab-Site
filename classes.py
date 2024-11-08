@@ -14,6 +14,11 @@ class User(db.Model):
     full_name = db.Column(db.String(120), nullable=True)
     location = db.Column(db.String(120), nullable=True)
 
+    def __init__(self, username, full_name=None, location=None):
+        self.username = username
+        self.full_name = full_name
+        self.location = location
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
