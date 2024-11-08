@@ -34,6 +34,7 @@
                         </div>
                         {% if session['username'] == project.owner and not milestone.completed %}
                             <form method="post" action="/complete-milestone/{{ milestone.id }}" class="mb-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Are you sure you want to mark this milestone as complete?');">Mark as Complete</button>
                             </form>
                         {% endif %}

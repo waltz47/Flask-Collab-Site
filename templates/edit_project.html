@@ -5,6 +5,7 @@
     <div class="col-lg-8 mx-auto">
         <h2 class="text-center mb-4">Edit Project</h2>
         <form method="post" action="/edit-project/{{ project.id }}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-3">
                 <label for="title" class="form-label">Project Title:</label>
                 <input type="text" class="form-control" id="title" name="title" value="{{ project.title }}" required>
