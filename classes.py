@@ -6,37 +6,28 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(120), nullable=False)
-    full_name = db.Column(db.String(120), nullable=True)
-    location = db.Column(db.String(120), nullable=True)
-
-    def __init__(self, username, full_name=None, location=None):
-        self.username = username
-        self.full_name = full_name
-        self.location = location
-
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    def serialize(self):
-        return {
-            'username': self.username,
-            'full_name': self.full_name,
-            'location': self.location,
-            'projects': [project.serialize() for project in self.projects]
-        }
-
 project_users = db.Table('project_users',
     db.Column('project_id', db.String(64), db.ForeignKey('projects.id'), primary_key=True),
     db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True)
 )
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)  # Add email field
+    projects = db.relationship('Project', secondary=project_users, backref=db.backref('users', lazy=True))
+
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+
+    def serialize(self):
+        return {
+            'username': self.username,
+            'email': self.email,
+            'projects': [project.serialize() for project in self.projects]
+        }
 
 class Milestone(db.Model):
     __tablename__ = 'milestones'
@@ -67,8 +58,6 @@ class Project(db.Model):
     category = db.Column(db.String(50), nullable=True)
     deadline = db.Column(db.DateTime, nullable=True)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    users = db.relationship('User', secondary=project_users, lazy='subquery',
-                            backref=db.backref('projects', lazy=True))
     milestones = db.relationship(
         'Milestone',
         backref='project',

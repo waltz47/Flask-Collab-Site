@@ -1,6 +1,6 @@
 import argparse  # Add this import
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
-from classes import *
+from classes import db, User, Project, Milestone  # Ensure these imports are present
 from werkzeug.utils import secure_filename
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -11,6 +11,8 @@ from flask_mail import Mail, Message  # Ensure Flask-Mail is installed
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from authlib.integrations.flask_client import OAuth  # Update this import
+from urllib.parse import quote as url_quote  # Update this import
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
@@ -29,7 +31,12 @@ app.config.update(
 # Initialize CSRF protection
 csrf = CSRFProtect(app)
 
+# Initialize the database
 db.init_app(app)
+
+with app.app_context():
+    db.create_all()
+
 migrate = Migrate(app, db)  # Ensure this is initialized
 
 # Initialize Flask-Mail
@@ -47,8 +54,20 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]
 )
 
-with app.app_context():
-    db.create_all()
+# Initialize OAuth
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id='DD',
+    client_secret='DD',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    refresh_token_url=None,
+    redirect_uri='http://localhost:5000/login/authorized',  # Ensure this matches the registered URI
+    client_kwargs={'scope': 'email'},
+)
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
@@ -72,40 +91,64 @@ def about():
     # Pass 'about_text' to the template
     return render_template('about.html', about_text=about_text)
 
-# Registration route
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        full_name = request.form.get('full_name')
-        location = request.form.get('location')
-        if User.query.filter_by(username=username).first():
-            flash('Username already exists.', 'error')
-            return redirect(url_for('register'))
-        new_user = User(username=username, full_name=full_name, location=location)
-        new_user.set_password(password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('Registration successful. Please log in.', 'success')
-        return redirect(url_for('login'))
-    return render_template('register.html')
+# Remove the existing registration route
+# @app.route('/register', methods=['GET', 'POST'])
+# def register():
+#     # ...existing code...
 
-# Login route
-@app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("50 per minute")
+@app.route('/login')
 def login():
+    redirect_uri = url_for('authorized', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/logout')
+def logout():
+    session.pop('google_token', None)
+    session.pop('username', None)
+    session.pop('email', None)
+    return redirect(url_for('homepage'))
+
+@app.route('/login/authorized')
+def authorized():
+    token = google.authorize_access_token()
+    if token is None:
+        flash('Access denied: reason={} error={}'.format(
+            request.args['error_reason'],
+            request.args['error_description']
+        ), 'error')
+        return redirect(url_for('homepage'))
+
+    session['google_token'] = token
+    user_info = google.get('https://www.googleapis.com/oauth2/v1/userinfo').json()
+    session['email'] = user_info['email']
+
+    user = User.query.filter_by(email=session['email']).first()
+    if user:
+        session['username'] = user.username
+        return redirect(url_for('homepage'))
+    else:
+        return redirect(url_for('ask_username'))
+
+@app.route('/ask-username', methods=['GET', 'POST'])
+@csrf.exempt  # Add CSRF protection
+def ask_username():
     if request.method == 'POST':
         username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            flash('Logged in successfully.', 'success')
-            session['username'] = username
-            return redirect(url_for('homepage'))
+        print(f"Received username: {username}")  # Debugging statement
+        if User.query.filter_by(username=username).first():
+            flash('Username already taken, please choose another one.', 'error')
         else:
-            flash('Login failed. Check your username and password.', 'error')
-    return render_template('login.html')
+            try:
+                user = User(username=username, email=session['email'])
+                db.session.add(user)
+                db.session.commit()
+                session['username'] = username
+                print(f"User {username} added to the database")  # Debugging statement
+                return redirect(url_for('homepage'))
+            except Exception as e:
+                print(f"Error adding user: {e}")  # Debugging statement
+                flash('An error occurred while creating your account. Please try again.', 'error')
+    return render_template('ask_username.html')
 
 # Post a project route
 @app.route('/post-project', methods=['GET', 'POST'])
@@ -302,12 +345,6 @@ def user_profile(username):
         return render_template('user_profile.html', user=user)
     else:
         return "User not found", 404
-
-# Logout route
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
 
 @app.route('/search')
 def search():
