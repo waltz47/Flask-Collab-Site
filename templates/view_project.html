@@ -8,8 +8,6 @@
             <p class="mb-0"><strong>Last Updated:</strong> {{ project.last_updated.strftime('%Y-%m-%d %H:%M') }}</p>
         </div>
         <p><strong>Posted by:</strong> <a href="/user/{{ project.owner }}" class="user-link">{{ project.owner }}</a></p>
-        <p><strong>Category:</strong> {{ project.category }}</p>
-        <p><strong>Deadline:</strong> {{ project.deadline }}</p>
         <p>{{ project.description }}</p>
         {% if project.users|length > 1 %}
             <p><strong>Other Users:</strong>
@@ -28,9 +26,6 @@
                         {% if milestone.status == 'completed' %}bg-success text-white{% elif milestone.status == 'overdue' %}bg-danger text-white{% else %}bg-light{% endif %}">
                         <div>
                             <strong>{{ milestone.description }}</strong>
-                            {% if milestone.deadline %}
-                                <div>Deadline: {{ milestone.deadline.strftime('%Y-%m-%d') }}</div>
-                            {% endif %}
                         </div>
                         {% if session['username'] == project.owner and not milestone.completed %}
                             <form method="post" action="/complete-milestone/{{ milestone.id }}" class="mb-0">
@@ -52,9 +47,9 @@
                             </div>
                         {% endfor %}
                     {% else %}
-                        <div class="carousel-item active">
+                        <!-- <div class="carousel-item active">
                             <p>No image for this project.</p>
-                        </div>
+                        </div> -->
                     {% endif %}
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#projectCarousel" data-bs-slide="prev">
@@ -67,7 +62,7 @@
                 </button>
             </div>
         {% else %}
-            <p>No images for this project.</p>
+            <!-- <p>No images for this project.</p> -->
         {% endif %}
         <div class="mt-4 mb-5">
             {% if session['username'] == project.owner or session['username'] in project.users|map(attribute='username') %}

@@ -15,19 +15,6 @@
                 <textarea class="form-control" id="description" name="description" rows="5" required>{{ request.form.description or '' }}</textarea>
             </div>
             <div class="mb-3">
-                <label for="category" class="form-label">Category:</label>
-                <select class="form-control" id="category" name="category">
-                    <option value="">Select a category</option>
-                    <option value="hackathons" {% if request.form.category == 'hackathons' %}selected{% endif %}>Hackathons</option>
-                    <option value="game jams" {% if request.form.category == 'game jams' %}selected{% endif %}>Game Jams</option>
-                    <option value="events" {% if request.form.category == 'events' %}selected{% endif %}>Events</option>
-                </select>
-            </div>
-            <div class="mb-3">
-                <label for="deadline" class="form-label">Deadline:</label>
-                <input type="date" class="form-control" id="deadline" name="deadline" value="{{ request.form.deadline or '' }}">
-            </div>
-            <div class="mb-3">
                 <label for="images" class="form-label">Project Images:</label>
                 <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
             </div>

@@ -13,6 +13,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from authlib.integrations.flask_client import OAuth  # Update this import
 from urllib.parse import quote as url_quote  # Update this import
+import json  # Add this import
 
 app = Flask(__name__, static_folder='static')
 app.secret_key = 'your_secret_key'
@@ -54,12 +55,19 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]
 )
 
+
+secret = r"C:\\Users\\spark\\Downloads\\secret.json"
+
+# Load secrets from the secret.json file
+with open(secret, 'r') as f:
+    secrets = json.load(f)
+
 # Initialize OAuth
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id='DD',
-    client_secret='DD',
+    client_id=secrets['web']['client_id'],  # Use the client_id from the secret file
+    client_secret=secrets['web']['client_secret'],  # Use the client_secret from the secret file
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
     access_token_url='https://accounts.google.com/o/oauth2/token',
@@ -160,9 +168,6 @@ def post_project():
         title = request.form['title']
         description = request.form['description']
         owner = session['username']
-        category = request.form.get('category')
-        deadline = request.form.get('deadline')
-        deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
         other_users = request.form.get('users', '').split(',')
         invalid_usernames = []
         valid_users = []
@@ -183,10 +188,10 @@ def post_project():
 
         if invalid_usernames:
             flash(f"Invalid usernames: {', '.join(invalid_usernames)}", 'error')
-            return render_template('post_project.html', title=title, description=description, category=category, deadline=deadline, users=request.form['users'])
+            return render_template('post_project.html', title=title, description=description, users=request.form['users'])
 
         # Create and add the project to the session
-        p = Project(title=title, description=description, owner=owner, category=category, deadline=deadline)
+        p = Project(title=title, description=description, owner=owner)
         db.session.add(p)
         user = User.query.filter_by(username=owner).first()
         if user:
@@ -208,8 +213,7 @@ def post_project():
         milestones_deadlines = request.form.getlist('milestone_deadlines')
         for desc, dl in zip(milestones_descriptions, milestones_deadlines):
             if desc.strip():
-                deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
-                milestone = Milestone(description=desc.strip(), deadline=deadline)
+                milestone = Milestone(description=desc.strip())
                 milestone.completed = request.form.get('milestone_completed_new') == 'on'
                 p.milestones.append(milestone)
 
@@ -259,9 +263,6 @@ def edit_project(project_id):
     if request.method == 'POST':
         project.title = request.form['title']
         project.description = request.form['description']
-        project.category = request.form.get('category')
-        deadline = request.form.get('deadline')
-        project.deadline = datetime.strptime(deadline, '%Y-%m-%d') if deadline else None
         other_users = request.form.get('users', '').split(',')
         invalid_usernames = []
         valid_users = []
@@ -310,18 +311,16 @@ def edit_project(project_id):
 
         # Update existing milestones
         for m_id, desc, dl in zip(milestone_ids, milestones_descriptions, milestones_deadlines):
-            deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
             if m_id:
                 # Update existing milestone
                 milestone = Milestone.query.get(int(m_id))
                 if milestone and milestone in project.milestones:
                     milestone.description = desc.strip()
-                    milestone.deadline = deadline
                     milestone.completed = request.form.get(f'milestone_completed_{m_id}') == 'on'
             else:
                 # Add new milestone
                 if desc.strip():
-                    new_milestone = Milestone(description=desc.strip(), deadline=deadline)
+                    new_milestone = Milestone(description=desc.strip())
                     new_milestone.completed = request.form.get('milestone_completed_new') == 'on'
                     project.milestones.append(new_milestone)
                     db.session.add(new_milestone)  # Ensure new milestone is added to the session
