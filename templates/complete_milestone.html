@@ -1,0 +1,14 @@
+
+{% extends "base.html" %}
+{% block title %}Complete Milestone{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <h2 class="text-center mb-4">Complete Milestone</h2>
+        <form method="post" action="/complete-milestone/{{ milestone.id }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <!-- ...existing code... -->
+        </form>
+    </div>
+</div>
+{% endblock %}

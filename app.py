@@ -16,7 +16,7 @@ from urllib.parse import quote as url_quote  # Update this import
 import json  # Add this import
 
 app = Flask(__name__, static_folder='static')
-app.secret_key = 'your_secret_key'
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')  # Use environment variable for secret key
 app.config['UPLOAD_DIR'] = 'static/uploads'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -44,8 +44,8 @@ migrate = Migrate(app, db)  # Ensure this is initialized
 app.config['MAIL_SERVER'] = 'smtp.example.com'  # Replace with your SMTP server
 app.config['MAIL_PORT'] = 587  # Update if different
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'your_email@example.com'  # Replace with your email
-app.config['MAIL_PASSWORD'] = 'your_email_password'  # Replace with your email password
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME', 'your_email@example.com')  # Use environment variable for email
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'your_email_password')  # Use environment variable for email password
 mail = Mail(app)
 
 # Initialize Flask-Limiter
@@ -138,7 +138,6 @@ def authorized():
         return redirect(url_for('ask_username'))
 
 @app.route('/ask-username', methods=['GET', 'POST'])
-@csrf.exempt  # Add CSRF protection
 def ask_username():
     if request.method == 'POST':
         username = request.form['username']
@@ -336,6 +335,20 @@ def edit_project(project_id):
         return redirect(url_for('view_project', project_id=project.id))
 
     return render_template('edit_project.html', project=project)
+
+@app.route('/remove-image/<project_id>', methods=['POST'])
+def remove_image(project_id):
+    project = Project.query.get(project_id)
+    if not project:
+        return "Project not found", 404
+
+    if 'username' not in session or (session['username'] != project.owner and session['username'] not in [user.username for user in project.users]):
+        return "You do not have permission to remove images from this project", 403
+
+    image = request.form['image']
+    project.remove_image(image)
+    db.session.commit()
+    return redirect(url_for('edit_project', project_id=project.id))
 
 @app.route('/user/<username>')
 def user_profile(username):

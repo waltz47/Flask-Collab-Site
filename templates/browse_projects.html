@@ -31,15 +31,15 @@
                 <div class="d-flex w-100 justify-content-between">
                     <h5 class="mb-1">${project.title}</h5>
                     <small>
-                        Last Updated: ${new Date(project.last_updated).toLocaleString('en-US', { 
-                            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
-                        })}
+                        Posted by: ${project.owner}${otherUsersText}
                     </small>
                 </div>
                 <p class="mb-1">${project.description}</p>
                 <div class="d-flex w-100 justify-content-between">
                     <small>
-                        Posted by: ${project.owner}${otherUsersText}
+                        Last Updated: ${new Date(project.last_updated).toLocaleString('en-US', { 
+                            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' 
+                        })}
                     </small>
                 </div>
                 ${project.images ? `
@@ -118,7 +118,7 @@
             allProjectsLoaded = false;
             loading = false;
             
-            const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const response = await fetch(`/search?q=${encodeURIComponent(query)}&limit=50`);
             const projects = await response.json();
             const container = document.getElementById('projects-container');
             container.innerHTML = '';

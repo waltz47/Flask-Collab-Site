@@ -17,6 +17,17 @@
             <div class="mb-3">
                 <label for="images" class="form-label">Project Images:</label>
                 <input type="file" class="form-control" id="images" name="images" multiple accept="image/*">
+                <div class="mt-3">
+                    <h5>Existing Images:</h5>
+                    <div class="image-grid">
+                        {% for image in project.project_images.split(',') %}
+                            <div class="position-relative">
+                                <img src="/static/uploads/{{ image.strip() }}" class="img-fluid img-thumbnail project-thumbnail" alt="Project Image" style="width: 100%; height: auto; max-width: 150px; object-fit: cover;">
+                                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0" onclick="removeImage('{{ image.strip() }}')">Remove</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
             <div class="mb-3">
                 <label for="users" class="form-label">Other Users (comma-separated usernames):</label>
@@ -49,6 +60,18 @@
     </div>
 </div>
 <script>
+    function removeImage(image) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        form.action = '/remove-image/{{ project.id }}';
+        form.innerHTML = `
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="image" value="${image}">
+        `;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
     document.getElementById('add-milestone').addEventListener('click', function() {
         const container = document.getElementById('milestones-container');
         const newMilestone = document.createElement('div');

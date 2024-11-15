@@ -64,14 +64,15 @@ body {
 }
 
 .project-thumbnail {
-    width: 200px;
-    height: 180px;
+    width: 150px; /* Set a constant width */
+    height: 150px; /* Set a constant height */
     object-fit: cover;
 }
 
 .project-image {
-    width: 700px;
-    height: 700px;
+    width: 100%; /* Ensure it takes the full width of the container */
+    height: auto; /* Maintain aspect ratio */
+    max-height: 500px; /* Set a maximum height */
     object-fit: contain;
 }
 
@@ -128,5 +129,11 @@ body {
 .profile-card:hover {
     transform: none; /* No lift on hover */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Keep the same shadow */
+}
+
+.title-background {
+    background-color: rgba(0, 0, 0, 0.2); /* Dark grey background with transparency */
+    padding: 10px;
+    border-radius: 5px;
 }
 /* ...existing code... */
