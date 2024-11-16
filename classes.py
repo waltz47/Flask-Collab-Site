@@ -38,6 +38,12 @@ class Milestone(db.Model):
     completed_date = db.Column(db.DateTime, nullable=True)
     project_id = db.Column(db.String(64), db.ForeignKey('projects.id'), nullable=False)
 
+    def __init__(self, description, project_id, deadline=None, completed=False):
+        self.description = description
+        self.project_id = project_id
+        self.deadline = deadline
+        self.completed = completed
+
     def serialize(self):
         return {
             'id': self.id,

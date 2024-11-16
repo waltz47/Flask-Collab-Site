@@ -99,11 +99,6 @@ def about():
     # Pass 'about_text' to the template
     return render_template('about.html', about_text=about_text)
 
-# Remove the existing registration route
-# @app.route('/register', methods=['GET', 'POST'])
-# def register():
-#     # ...existing code...
-
 @app.route('/login')
 def login():
     redirect_uri = url_for('authorized', _external=True)
@@ -299,30 +294,37 @@ def edit_project(project_id):
                     project.add_image(filename)
 
         # Get milestone data from form
-        milestone_ids = request.form.getlist('milestone_ids')
-        milestones_descriptions = request.form.getlist('milestone_descriptions')
-        milestones_deadlines = request.form.getlist('milestone_deadlines')
+        milestone_ids = request.form.getlist('milestone_ids[]')
+        milestones_descriptions = request.form.getlist('milestone_descriptions[]')
+        milestones_deadlines = request.form.getlist('milestone_deadlines[]')
+        milestones_completed = []
+        for idx in range(len(milestone_ids)):
+            completed_value = request.form.get(f'milestone_completed_{idx}', '0')
+            milestones_completed.append(completed_value)
 
         # Ensure all lists are of the same length
-        if not (len(milestone_ids) == len(milestones_descriptions) == len(milestones_deadlines)):
+        if not (len(milestone_ids) == len(milestones_descriptions) == len(milestones_deadlines) == len(milestones_completed)):
             flash("Mismatch in milestone data.", 'error')
             return render_template('edit_project.html', project=project)
 
-        # Update existing milestones
-        for m_id, desc, dl in zip(milestone_ids, milestones_descriptions, milestones_deadlines):
+        # Update existing milestones and add new ones
+        for m_id, desc, dl, comp in zip(milestone_ids, milestones_descriptions, milestones_deadlines, milestones_completed):
+            is_completed = comp == '1'
             if m_id:
                 # Update existing milestone
                 milestone = Milestone.query.get(int(m_id))
                 if milestone and milestone in project.milestones:
                     milestone.description = desc.strip()
-                    milestone.completed = request.form.get(f'milestone_completed_{m_id}') == 'on'
+                    milestone.deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
+                    milestone.completed = is_completed
             else:
                 # Add new milestone
                 if desc.strip():
-                    new_milestone = Milestone(description=desc.strip())
-                    new_milestone.completed = request.form.get('milestone_completed_new') == 'on'
+                    new_milestone = Milestone(description=desc.strip(), project_id=project.id)
+                    new_milestone.deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
+                    new_milestone.completed = is_completed
+                    db.session.add(new_milestone)
                     project.milestones.append(new_milestone)
-                    db.session.add(new_milestone)  # Ensure new milestone is added to the session
 
         # Remove milestones that were deleted in the form
         form_milestone_ids = [int(mid) for mid in milestone_ids if mid]
