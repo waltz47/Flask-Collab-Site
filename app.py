@@ -56,19 +56,12 @@ limiter = Limiter(
     default_limits=["200 per day", "50 per hour"]
 )
 
-
-secret = r"C:\\Users\\spark\\Downloads\\secret.json"
-
-# Load secrets from the secret.json file
-with open(secret, 'r') as f:
-    secrets = json.load(f)
-
 # Initialize OAuth
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id=secrets['web']['client_id'],  # Use the client_id from the secret file
-    client_secret=secrets['web']['client_secret'],  # Use the client_secret from the secret file
+    client_id=os.environ['CLIENT_ID'],  # Use the client_id from the secret file
+    client_secret=os.environ['CLIENT_SECRET'],  # Use the client_secret from the secret file
     authorize_url='https://accounts.google.com/o/oauth2/auth',
     authorize_params=None,
     access_token_url='https://accounts.google.com/o/oauth2/token',
