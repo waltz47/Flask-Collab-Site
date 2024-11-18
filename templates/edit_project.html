@@ -37,12 +37,15 @@
             <div id="milestones-container">
                 {% for milestone in project.milestones %}
                     <div class="milestone-item">
-                        <input type="text" name="milestone_descriptions" value="{{ milestone.description }}" class="form-control mb-2">
-                        <input type="date" name="milestone_deadlines" value="{{ milestone.deadline.strftime('%Y-%m-%d') if milestone.deadline else '' }}" class="form-control mb-2">
-                        <input type="hidden" name="milestone_ids" value="{{ milestone.id }}">
+                        <input type="text" name="milestone_descriptions[]" value="{{ milestone.description }}" class="form-control mb-2">
+                        <input type="date" name="milestone_deadlines[]" value="{{ milestone.deadline.strftime('%Y-%m-%d') if milestone.deadline else '' }}" class="form-control mb-2">
+                        <input type="hidden" name="milestone_ids[]" value="{{ milestone.id }}">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="milestone_completed_{{ milestone.id }}" id="milestone_completed_{{ milestone.id }}" {% if milestone.completed %}checked{% endif %}>
-                            <label class="form-check-label" for="milestone_completed_{{ milestone.id }}">
+                            <input class="form-check-input" type="checkbox" 
+                                   name="milestone_completed_{{ loop.index0 }}" 
+                                   id="milestone_completed_{{ loop.index0 }}" 
+                                   {% if milestone.completed %}checked{% endif %}>
+                            <label class="form-check-label" for="milestone_completed_{{ loop.index0 }}">
                                 Completed
                             </label>
                         </div>
@@ -72,22 +75,26 @@
         form.submit();
     }
 
+    let milestoneCount = {{ project.milestones|length }};
     document.getElementById('add-milestone').addEventListener('click', function() {
         const container = document.getElementById('milestones-container');
         const newMilestone = document.createElement('div');
         newMilestone.classList.add('milestone-item');
         newMilestone.innerHTML = `
-            <input type="text" name="milestone_descriptions" placeholder="Milestone Description" class="form-control mb-2">
-            <input type="date" name="milestone_deadlines" class="form-control mb-2">
-            <input type="hidden" name="milestone_ids" value="">
+            <input type="text" name="milestone_descriptions[]" placeholder="Milestone Description" class="form-control mb-2">
+            <input type="date" name="milestone_deadlines[]" class="form-control mb-2">
+            <input type="hidden" name="milestone_ids[]" value="">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="milestone_completed_new" id="milestone_completed_new">
-                <label class="form-check-label" for="milestone_completed_new">
+                <input class="form-check-input" type="checkbox" 
+                       name="milestone_completed_${milestoneCount}" 
+                       id="milestone_completed_${milestoneCount}">
+                <label class="form-check-label" for="milestone_completed_${milestoneCount}">
                     Completed
                 </label>
             </div>
         `;
         container.appendChild(newMilestone);
+        milestoneCount++;
     });
 </script>
 {% endblock %}

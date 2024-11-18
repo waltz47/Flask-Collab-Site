@@ -91,7 +91,7 @@ body {
 }
 
 .project-card {
-    background-color: rgba(255, 255, 255, 0.9); /* White with transparency */
+    background-color: rgba(255, 255, 255, 0.8); /* White with transparency */
     border: 1px solid rgba(0, 0, 0, 0.1); /* Light border */
     border-radius: 10px; /* Rounded corners */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow */

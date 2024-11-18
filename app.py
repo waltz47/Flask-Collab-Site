@@ -20,6 +20,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key')  # Use environm
 app.config['UPLOAD_DIR'] = 'static/uploads'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///collab_db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 604800  # Cache static files for one week (in seconds)
 
 # Secure session cookies
 app.config.update(
@@ -207,7 +208,8 @@ def post_project():
         milestones_deadlines = request.form.getlist('milestone_deadlines')
         for desc, dl in zip(milestones_descriptions, milestones_deadlines):
             if desc.strip():
-                milestone = Milestone(description=desc.strip())
+                milestone = Milestone(description=desc.strip(), project_id=p.id)
+                milestone.deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
                 milestone.completed = request.form.get('milestone_completed_new') == 'on'
                 p.milestones.append(milestone)
 
@@ -222,6 +224,7 @@ def browse_projects():
     return render_template('browse_projects.html')
 
 @app.route('/load-more-projects')
+@limiter.exempt
 def load_more_projects():
     page = request.args.get('page', 1, type=int)
     initial_load = request.args.get('initialLoad', 'false').lower() == 'true'
@@ -297,19 +300,20 @@ def edit_project(project_id):
         milestone_ids = request.form.getlist('milestone_ids[]')
         milestones_descriptions = request.form.getlist('milestone_descriptions[]')
         milestones_deadlines = request.form.getlist('milestone_deadlines[]')
-        milestones_completed = []
-        for idx in range(len(milestone_ids)):
-            completed_value = request.form.get(f'milestone_completed_{idx}', '0')
-            milestones_completed.append(completed_value)
 
         # Ensure all lists are of the same length
-        if not (len(milestone_ids) == len(milestones_descriptions) == len(milestones_deadlines) == len(milestones_completed)):
+        if not (len(milestone_ids) == len(milestones_descriptions) == len(milestones_deadlines)):
             flash("Mismatch in milestone data.", 'error')
             return render_template('edit_project.html', project=project)
-
+        
         # Update existing milestones and add new ones
-        for m_id, desc, dl, comp in zip(milestone_ids, milestones_descriptions, milestones_deadlines, milestones_completed):
-            is_completed = comp == '1'
+        for idx in range(len(milestone_ids)):
+            m_id = milestone_ids[idx]
+            desc = milestones_descriptions[idx]
+            dl = milestones_deadlines[idx]
+            # Check if the milestone is marked as completed
+            is_completed = f"milestone_completed_{idx}" in request.form
+
             if m_id:
                 # Update existing milestone
                 milestone = Milestone.query.get(int(m_id))
@@ -323,13 +327,14 @@ def edit_project(project_id):
                     new_milestone = Milestone(description=desc.strip(), project_id=project.id)
                     new_milestone.deadline = datetime.strptime(dl, '%Y-%m-%d') if dl else None
                     new_milestone.completed = is_completed
-                    db.session.add(new_milestone)
+                    db.session.add(new_milestone)  # Add new milestone to the session
+                    db.session.flush()  # Ensure the milestone gets an ID
                     project.milestones.append(new_milestone)
 
         # Remove milestones that were deleted in the form
         form_milestone_ids = [int(mid) for mid in milestone_ids if mid]
         for milestone in project.milestones[:]:
-            if milestone.id not in form_milestone_ids and str(milestone.id) not in milestone_ids:
+            if milestone.id not in form_milestone_ids:
                 project.milestones.remove(milestone)
                 db.session.delete(milestone)
 
@@ -412,3 +417,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     app.run(debug=args.debug)
+

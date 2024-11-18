@@ -68,7 +68,7 @@
             {% if session['username'] == project.owner or session['username'] in project.users|map(attribute='username') %}
                 <a href="/edit-project/{{ project.id }}" class="btn btn-primary me-2">Edit Project</a>
             {% endif %}
-            <a href="/browse-projects" class="btn btn-secondary">Back to Browse Projects</a>
+            <a href="/browse-projects" class="btn btn-secondary">Browse More...</a>
         </div>
     </div>
 </div>
